@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapters</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #a18cd1, #fbc2eb);
+            height: 100vh;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="p-4">
+    <div class="container text-center">
+        <h1 id="subject-title"></h1>
+        <button class="btn btn-secondary mb-3" onclick="goBack()">Back to Subjects</button>
+
+        <div class="mt-4" id="chapter-list">
+            <!-- Chapters will be loaded dynamically -->
+        </div>
+
+        <button class="btn btn-warning mt-3" onclick="showChapterForm()">+ Add Chapter</button>
+
+
+        <!-- Dynamic Chapter Form -->
+        <div id="chapter-form-container" class="mt-4 hidden">
+            <div class="card p-3">
+                <h5>Add New Chapter</h5>
+                <form id="chapter-form">
+                    <div class="mb-3">
+                        <label class="form-label">Chapter Name</label>
+                        <input type="text" id="chapter-name" class="form-control">
+                        <label class="form-label">Chapter description</label>
+                        <input type="text" id="chapter-desc" class="form-control" height="100px">
+                        <label class="form-label">Chapter Notes</label>
+                        <!-- <input type="text" id="chapter-Notes" class="form-control" height="100px"> -->
+                         <textarea class="form-control" id="chapter-Notes" rows="30"></textarea>
+                         
+                    </div>
+
+                    <div class="mb-3">
+                        <!-- <label class="form-label">Main Topics</label> -->
+                        <!-- not required for phase 1 multiple sub chapters -->
+                        <!-- <button type="button" class="btn btn-sm btn-success mb-2" onclick="addMainTopic()">+ Add Main Topic</button> -->
+                        <div id="main-topics-container"></div>
+                    </div>
+
+                    <button type="button" class="btn btn-primary mt-3" onclick="saveChapter()">Save Chapter</button>
+                    <button type="button" class="btn btn-danger mt-3" onclick="toggleChapterForm()">Cancel</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        
+        let chapters = [];
+       
+        async function fetchResponse() {
+            console.log("Fetching response for:");
+            try {
+                let subject = new URLSearchParams(window.location.search).get("subject");
+                console.log('subject is', subject)
+                let response = await fetch('http://localhost:5000/getChapters?subject='+subject, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                });
+
+                let data = await response.json();
+                console.log(data)
+                data.forEach(chapter => {
+                    chapters.push(chapter);
+                });
+                // console.log('chapters is', chapters)
+            } catch (error) {
+                console.error("Error fetching response:", error);
+            }
+        }
+        
+        
+    
+        async function loadChapters() {
+            let subject = new URLSearchParams(window.location.search).get("subject");
+            document.getElementById("subject-title").innerText = subject + " - Chapters";
+            // console.log('subject is', subject)
+            // fetchResponse();
+            await fetchResponse();
+            console.log('chapters is', chapters)
+            displayChapters();
+        }
+
+        function showChapterForm() {
+            resetForm(); // Clear the form before showing it
+            document.getElementById("chapter-form-container").classList.remove("hidden");
+        }
+        function resetForm() {
+            document.getElementById("chapter-name").value = ""; // Clear chapter name
+            document.getElementById("main-topics-container").innerHTML = ""; // Remove all topics
+            document.getElementById("chapter-Notes").value = "";
+            document.getElementById("chapter-desc").value = ""
+        }
+
+        function toggleChapterForm() {
+            let formContainer = document.getElementById("chapter-form-container");
+            formContainer.classList.toggle("hidden");
+        }
+
+
+        function saveChapter() {
+            let chapterName = document.getElementById("chapter-name").value;
+            let chapterNotes = document.getElementById("chapter-Notes").value;
+            let chapterDesc = document.getElementById("chapter-desc").value;
+            
+            function extractTopics(container) {
+                let topics = [];
+                
+                container.querySelectorAll(":scope > div").forEach(topicDiv => {
+                    let topicName = topicDiv.children[0].value; // First input is the topic name
+                    let subTopicsContainer = topicDiv.querySelector(".subtopics-container");
+                    
+                    let topicData = {
+                        name: topicName,
+                        subTopics: subTopicsContainer ? extractTopics(subTopicsContainer) : []
+                    };
+                    
+                    topics.push(topicData);
+                });
+                
+                return topics;
+            }
+
+            let mainTopics = extractTopics(document.getElementById("main-topics-container"));
+
+            if (chapterName.trim()) {
+                let chapterData = { name: chapterName, description: chapterDesc, notes: chapterNotes };
+                let subject = new URLSearchParams(window.location.search).get("subject");
+                fetch('http://localhost:5000/getChapters?subject='+subject, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ subject, chapterData })
+                }).then(response => {
+                    console.log("Subject added successfully:", response);
+                }).catch(error => {
+                    console.error("Error adding subject:", error);
+                });
+                chapters.push(chapterData);
+                console.log('chapters is', chapters)
+
+                console.log("Corrected Nested Chapter Data:", JSON.stringify(chapterData, null, 2));
+
+                displayChapters();
+                toggleChapterForm();
+            }
+        }
+
+
+
+        function displayChapters() {
+            let chapterList = document.getElementById("chapter-list");
+            chapterList.innerHTML = "";
+            let rowDiv = document.createElement("div");
+            rowDiv.classList.add("row", "g-3");
+
+            chapters.forEach((chapter, index) => {
+                let colDiv = document.createElement("div");
+                colDiv.classList.add("col-md-4");
+
+                let chapterCard = document.createElement("div");
+                chapterCard.classList.add("card", "shadow", "cursor-pointer");
+                chapterCard.innerHTML = `
+                    <div class="card-body text-center">
+                        <h5 class="card-title">${chapter.name}</h5>
+                        <p class="card-text">${chapter.description}</p>
+                    </div>
+                `;
+                chapterCard.onclick = () => {
+                    let subject = new URLSearchParams(window.location.search).get("subject");
+                    // window.location.href = "/avatar?subject="+subject+"&chapter="+chapter.name;
+                    window.location.href = "/displayNotes?subject="+subject+"&chapter="+chapter.name;
+
+                    // localStorage.setItem("selectedChapter", JSON.stringify(chapter));
+                    // window.location.href = "/chapter_view";
+                };
+
+                colDiv.appendChild(chapterCard);
+                rowDiv.appendChild(colDiv);
+            });
+
+            chapterList.appendChild(rowDiv);
+        }
+
+        function goBack() {
+            window.location.href = "/instructor";
+        }
+        // <!-- not required for phase 1 multiple sub chapters -->
+
+        // function addMainTopic() {
+        //     let mainTopicsContainer = document.getElementById("main-topics-container");
+        //     let mainTopicDiv = document.createElement("div");
+        //     mainTopicDiv.classList.add("mb-2", "border", "p-2");
+        //     mainTopicDiv.innerHTML = `
+        //         <input type="text" class="form-control mb-2" placeholder="Main Topic">
+        //         <button type="button" class="btn btn-sm btn-info" onclick="addSubTopic(this)">+ Add Sub Topic</button>
+        //         <div class="subtopics-container mt-2"></div>
+        //     `;
+        //     mainTopicsContainer.appendChild(mainTopicDiv);
+        // }
+
+        // function addSubTopic(mainTopicElement) {
+        //     let subTopicsContainer = mainTopicElement.nextElementSibling;
+        //     let subTopicDiv = document.createElement("div");
+        //     subTopicDiv.classList.add("ms-3", "mb-2", "border-start", "ps-2");
+        //     subTopicDiv.innerHTML = `
+        //         <input type="text" class="form-control mb-2" placeholder="Sub Topic">
+        //         <button type="button" class="btn btn-sm btn-warning" onclick="addSubTopic(this)">+ Add Sub Sub-Topic</button>
+        //         <div class="subtopics-container mt-2"></div>
+        //     `;
+        //     subTopicsContainer.appendChild(subTopicDiv);
+        // }
+
+        window.onload = loadChapters;
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instructor Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #a18cd1, #fbc2eb);
+            height: 100vh;
+        }
+        .modal-dialog.modal-fullscreen {
+            max-width: 90%;
+            margin: auto;
+        }
+    </style>
+</head>
+<body class="p-4">
+    <div class="container text-center">
+        <h1 class="mb-4">Welcome to the Instructor Dashboard</h1>
+        <button class="btn btn-danger" onclick="window.location.href='/logout'">Logout</button>
+        <p class="lead">Manage subjects and assignments.</p>
+
+
+        <!-- Subject List -->
+        <div class="row mt-4" id="subject-list">
+            <!-- Dynamically loaded subjects -->
+        </div>
+
+        <!-- Add Subject Button -->
+        <button class="btn btn-success mt-4" data-bs-toggle="modal" data-bs-target="#addSubjectModal">+ Add Subject</button>
+    </div>
+
+    <!-- Add Subject Modal -->
+    <div class="modal fade" id="addSubjectModal" tabindex="-1">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Subject</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="new-subject-name" class="form-label">Subject Name</label>
+                            <input type="text" id="new-subject-name" class="form-control" placeholder="Enter subject name">
+                        </div>
+                        <div class="mb-3">
+                            <label for="new-subject-description" class="form-label">Description</label>
+                            <textarea id="new-subject-description" class="form-control" placeholder="Enter subject description"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="addSubject()">Add Subject</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let subjects = []
+        async function fetchResponse() {
+            try {
+                let response = await fetch('http://localhost:5000/subjects', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+    
+                if (!response.ok) {
+                    throw new Error("Failed to fetch subjects");
+                }
+    
+                subjects = await response.json();
+                loadSubjects();
+            } catch (error) {
+                console.error("Error fetching subjects:", error);
+            }
+        }
+        
+
+        function loadSubjects() {
+            let subjectList = document.getElementById("subject-list");
+            subjectList.innerHTML = "";
+            subjects.forEach(subject => {
+                let subjectCard = `
+                    <div class="col-md-4">
+                        <div class="card shadow">
+                            <div class="card-body text-center">
+                                <h5>${subject.name}</h5>
+                            <p>${subject.description}</p>
+                            <button style='margin-bottom:10px' class="btn btn-primary w-100" onclick="goToChapters('${subject.name}')">View Chapters</button>
+                            <button style='margin-bottom:10px' class="btn btn-warning w-100 mb-2" onclick="editSubject('${subject.name}', '${subject.description}')">Edit</button>
+                            <button style='margin-bottom:10px' class="btn btn-danger w-100" onclick="deleteSubject('${subject.name}')">Delete</button>
+                        </div>
+                        </div>
+                    </div>
+                `;
+                subjectList.innerHTML += subjectCard;
+            });
+        }
+        function editSubject(name, description) {
+            document.getElementById("modal-title").textContent = "Edit Subject";
+            document.getElementById("subject-name").value = name;
+            document.getElementById("subject-description").value = description;
+            document.getElementById("save-subject").setAttribute("onclick", `updateSubject('${name}')`);
+            new bootstrap.Modal(document.getElementById("subjectModal")).show();
+        }
+        async function addSubject() {
+            let name = document.getElementById("new-subject-name").value.trim();
+            let description = document.getElementById("new-subject-description").value.trim();
+    
+            if (!name) {
+                alert("Subject name cannot be empty!");
+                return;
+            }
+    
+            // Clear input fields immediately for better UX
+            document.getElementById("new-subject-name").value = "";
+            document.getElementById("new-subject-description").value = "";
+    
+            try {
+                let response = await fetch('http://localhost:5000/subjects', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, description })
+                });
+    
+                if (!response.ok) {
+                    throw new Error("Failed to add subject");
+                }
+    
+                let newSubject = await response.json();
+                subjects.push(newSubject);
+                loadSubjects();
+    
+                document.querySelector("#addSubjectModal .btn-close").click();
+                console.log("Subject added successfully:", newSubject);
+            } catch (error) {
+                console.error("Error adding subject:", error);
+            }
+            window.location.reload();
+        }
+
+        function goToChapters(subjectName) {
+            window.location.href = `chapters?subject=${encodeURIComponent(subjectName)}`;
+        }
+
+        window.onload = fetchResponse;
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

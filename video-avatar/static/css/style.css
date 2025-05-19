@@ -1,0 +1,139 @@
+* {
+    box-sizing: border-box;
+    padding: 0px;
+    margin: 0px;
+    font-family: "Comic Sans MS", "Arial", sans-serif;
+}
+
+.container {
+    height: 90vh;
+    display: flex;
+    flex-direction: row;
+    background-color: #FFECB3; /* Light yellow background */
+}
+
+/* Video frame remains centered */
+.video-frame {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 60%;
+    margin: 10px;
+    background-color: #FFD700; /* Golden color */
+    border-radius: 20px;
+    padding: 10px;
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 20px;
+}
+
+/* Chat UI styling remains same */
+.chat {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 10px;
+    background-color: #FFABAB; /* Soft pink */
+    margin: 10px;
+    border-radius: 20px;
+    height: 550px;
+}
+
+/* Chat Bubbles */
+.user {
+    align-self: flex-end;
+    max-width: 80%;
+    background-color: #B3E5FC; /* Light blue */
+    border-radius: 20px;
+    padding: 10px;
+    color: black;
+}
+
+.agent {
+    align-self: flex-start;
+    max-width: 80%;
+    background-color: #AED581; /* Light green */
+    border-radius: 20px;
+    padding: 10px;
+    color: black;
+}
+
+p {
+    font-size: 18px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+/* Chat UI container */
+.chatui-container {
+    display: flex;
+    flex-direction: column;
+    width: 38%;
+}
+
+/* Input field */
+input {
+    border-radius: 20px;
+    height: 50px;
+    padding: 15px;
+    margin: 10px;
+    width: 70%;
+    font-size: 16px;
+    border: 2px solid #FF4081; /* Pink border */
+}
+
+/* Buttons */
+button {
+    width: 60px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: #FF4081; /* Fun pink */
+    border: none;
+    color: white;
+    font-size: 20px;
+}
+
+button:hover {
+    background-color: #E91E63; /* Darker pink */
+    cursor: pointer;
+}
+
+/* Stop button */
+.stop {
+    background-color: #F44336; /* Red */
+}
+
+/* Menu bar */
+.menu {
+    padding: 10px;
+    background-color: #64B5F6; /* Light blue */
+}
+
+ul {
+    display: flex;
+    padding: 0px;
+    list-style: none;
+}
+
+li {
+    padding: 10px;
+    background-color: #FF7043; /* Fun orange */
+    margin: 10px;
+    border-radius: 20px;
+    width: 100px;
+    text-align: center;
+    font-size: 16px;
+    color: white;
+    font-weight: bold;
+}
+
+li:hover {
+    cursor: pointer;
+    background-color: #FFAB91; /* Softer orange */
+}
